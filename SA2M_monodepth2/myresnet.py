@@ -28,7 +28,7 @@ def conv3x3(in_planes, out_planes, stride=1):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, use_SA2M = False):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, use_SA2M = True):
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -50,11 +50,10 @@ class BasicBlock(nn.Module):
 
         out = self.conv2(out)
         out = self.bn2(out)
-
         if self.downsample is not None:
             residual = self.downsample(x)
 
-        if not self.SA2M is not None:
+        if self.SA2M is not None:
             out = self.SA2M(out)
 
         out += residual
@@ -66,7 +65,7 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, use_SA2M = False):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, use_SA2M = True):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
