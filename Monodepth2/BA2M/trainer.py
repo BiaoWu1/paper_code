@@ -30,6 +30,7 @@ class Trainer:
     def __init__(self, options):
         self.opt = options
         self.log_path = os.path.join(self.opt.log_dir, self.opt.model_name)
+
         # checking height and width are multiples of 32
         assert self.opt.height % 32 == 0, "'height' must be a multiple of 32"
         assert self.opt.width % 32 == 0, "'width' must be a multiple of 32"
@@ -51,16 +52,12 @@ class Trainer:
             self.opt.frame_ids.append("s")
 
         self.models["encoder"] = networks.ResnetEncoder(
-            self.opt.num_layers, att_type=self.opt.att_type)
-
+            self.opt.num_layers, self.opt.weights_init == "pretrained")
         self.models["encoder"].to(self.device)
         self.parameters_to_train += list(self.models["encoder"].parameters())
 
-        
         self.models["depth"] = networks.DepthDecoder(
             self.models["encoder"].num_ch_enc, self.opt.scales)
-
-
         self.models["depth"].to(self.device)
         self.parameters_to_train += list(self.models["depth"].parameters())
 
@@ -68,7 +65,9 @@ class Trainer:
             if self.opt.pose_model_type == "separate_resnet":
                 self.models["pose_encoder"] = networks.ResnetEncoder(
                     self.opt.num_layers,
-                    num_input_images=self.num_pose_frames, att_type=self.opt.att_type)
+                    self.opt.weights_init == "pretrained",
+                    num_input_images=self.num_pose_frames)
+
                 self.models["pose_encoder"].to(self.device)
                 self.parameters_to_train += list(self.models["pose_encoder"].parameters())
 
@@ -85,7 +84,6 @@ class Trainer:
                 self.models["pose"] = networks.PoseCNN(
                     self.num_input_frames if self.opt.pose_model_input == "all" else 2)
 
-
             self.models["pose"].to(self.device)
             self.parameters_to_train += list(self.models["pose"].parameters())
 
@@ -98,8 +96,6 @@ class Trainer:
             self.models["predictive_mask"] = networks.DepthDecoder(
                 self.models["encoder"].num_ch_enc, self.opt.scales,
                 num_output_channels=(len(self.opt.frame_ids) - 1))
-
-
             self.models["predictive_mask"].to(self.device)
             self.parameters_to_train += list(self.models["predictive_mask"].parameters())
 
